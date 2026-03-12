@@ -8,21 +8,23 @@ async function getSummary(req: Request, res: Response) {
         return;
     }
 
-    const {month, year} = req.query;
+    const {month, year, accountId} = req.query;
 
-    if(!month || !year) {
-        res.status(400).json({error: "Month and year are required"});
+    if(!month || !year || !accountId) {
+        res.status(400).json({error: "Month, year, and account ID are required"});
         return;
     }
 
     const startDate = new Date(Number(year), Number(month) - 1, 1);
     const endDate = new Date(Number(year), Number(month), 1);
+    const accountIdStr = String(accountId);
 
     try {
         const [incomeResult, expenseResult] = await prisma.$transaction([
             prisma.transaction.aggregate({
                 where: {
                     userId: user.id,
+                    accountId: accountIdStr,
                     type: "INCOME",
                     date: {gte: startDate, lt: endDate}
                 },
@@ -31,6 +33,7 @@ async function getSummary(req: Request, res: Response) {
             prisma.transaction.aggregate({
                 where: {
                     userId: user.id,
+                    accountId: accountIdStr,
                     type: "EXPENSE",
                     date: {gte: startDate, lt: endDate}
                 },
@@ -57,21 +60,23 @@ async function getSummaryByCategory(req: Request, res: Response) {
         return;
     }
 
-    const {month, year} = req.query;
+    const {month, year, accountId} = req.query;
 
-    if(!month || !year) {
-        res.status(400).json({error: "Month and year are requied"});
+    if(!month || !year || !accountId) {
+        res.status(400).json({error: "Month, year, and account ID are required"});
         return;
     }
 
     const startDate = new Date(Number(year), Number(month) - 1 , 1);
     const endDate = new Date(Number(year), Number(month), 1);
+    const accountIdStr = String(accountId);
 
     try {
         const grouped = await prisma.transaction.groupBy({
             by: ["categoryId"],
             where: {
                 userId: user.id,
+                accountId: accountIdStr,
                 type: "EXPENSE",
                 date: {gte: startDate, lt: endDate}
             },
@@ -117,10 +122,10 @@ async function getSummaryOverTime(req: Request, res: Response) {
     return;
   }
 
-  const { startDate, endDate, granularity = "daily" } = req.query;
+  const { startDate, endDate, granularity = "daily", accountId } = req.query;
 
-  if (!startDate || !endDate) {
-    res.status(400).json({ error: "startDate and endDate are required" });
+  if (!startDate || !endDate || !accountId) {
+    res.status(400).json({ error: "startDate, endDate, and accountId are required" });
     return;
   }
 
@@ -130,6 +135,7 @@ async function getSummaryOverTime(req: Request, res: Response) {
   }
 
   const truncUnit = granularity === "weekly" ? "week" : "day";
+  const accountIdStr = String(accountId);
 
   try {
     type OverTimeRow = {
@@ -148,6 +154,7 @@ async function getSummaryOverTime(req: Request, res: Response) {
         user_id = ${user.id}
         AND date >= ${new Date(String(startDate))}
         AND date < ${new Date(String(endDate))}
+        AND account_id = ${accountIdStr}
       GROUP BY period, type
       ORDER BY period ASC
     `;

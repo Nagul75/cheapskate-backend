@@ -4,6 +4,7 @@ import accountController from "../controllers/accountController";
 import categoryController from "../controllers/categoryController";
 import transactionController from "../controllers/transactionController";
 import budgetController from "../controllers/budgetController";
+import {changePassword} from "../controllers/authController";
 import dashboardController from "../controllers/dashboardController";
 
 const apiRouter = Router();
@@ -40,4 +41,6 @@ apiRouter.get("/dashboard/summary", dashboardController.getSummary);        // m
 apiRouter.get("/dashboard/by-category", dashboardController.getSummaryByCategory);     // spending grouped by category
 apiRouter.get("/dashboard/over-time", dashboardController.getSummaryOverTime);       // daily/weekly totals for a date range
 
+
+apiRouter.post("/account/change-password", changePassword);
 export default apiRouter;

@@ -132,6 +132,18 @@ export async function rotateRefreshToken(
     });
 }
 
+export async function revokeAllUserRefreshTokens(userId: string) {
+  await prisma.refreshToken.updateMany({
+    where: {
+      userId,
+      used: false
+    },
+    data: {
+      used: true
+    }
+  });
+}
+
 // revoke on logout
 
 export async function revokeRefreshToken(rawToken: string): Promise<void> {

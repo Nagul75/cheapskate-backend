@@ -53,7 +53,6 @@ async function createCateogry(req: Request, res: Response) {
     try {
         const category = await prisma.category.create({
             data: {
-                color,
                 icon,
                 name,
                 type: transaction_type,

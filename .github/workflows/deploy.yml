@@ -1,0 +1,78 @@
+name: Deploy Backend to EC2 via ECR
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}                  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      # --- Build & push image to ECR ---
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Login to ECR
+            TOKEN=$(aws ecr get-login-password --region ap-south-1)
+            echo $TOKEN | sudo docker login --username AWS --password-stdin 613981117544.dkr.ecr.ap-south-1.amazonaws.com
+
+            # Pull latest image
+            sudo docker pull 613981117544.dkr.ecr.ap-south-1.amazonaws.com/cheapskate-backend:latest
+
+            # Stop and remove old container
+            sudo docker stop $(sudo docker ps -q) || true
+            sudo docker rm $(sudo docker ps -aq) || true
+
+            # Start new container
+            sudo docker run -d -p 3000:3000 \
+              -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e NODE_ENV=prod \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e ACCESS_TOKEN_EXPIRY=15m \
+              -e REFRESH_TOKEN_EXPIRY=7d \
+              -e PRIVATE_KEY_PATH=./src/keys/private.pem \
+              -e PUBLIC_KEY_PATH=./src/keys/public.pem \
+              -v ~/keys:/app/src/keys \
+              613981117544.dkr.ecr.ap-south-1.amazonaws.com/cheapskate-backend:latest

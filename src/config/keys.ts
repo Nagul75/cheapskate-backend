@@ -1,27 +1,31 @@
 import { readFileSync } from "fs";
 import { importPKCS8, importSPKI } from "jose";
-import "dotenv/config";
+import { env } from "./env";
 
 let privateKey: CryptoKey, publicKey: CryptoKey;
 
+// PEM contents in an env var may use literal "\n" sequences.
+function loadPem(value: string | undefined, path: string | undefined): string {
+  if (value) return value.replace(/\\n/g, "\n");
+  return readFileSync(path!, "utf-8");
+}
+
 export async function getPrivateKey() {
   if (!privateKey) {
-    const path = process.env.PRIVATE_KEY_PATH;
-    if (path) {
-      const pem = readFileSync(path, "utf-8");
-      privateKey = await importPKCS8(pem, "RS256");
-    }
+    privateKey = await importPKCS8(
+      loadPem(env.PRIVATE_KEY, env.PRIVATE_KEY_PATH),
+      "RS256",
+    );
   }
   return privateKey;
 }
 
 export async function getPublicKey() {
   if (!publicKey) {
-    const path = process.env.PUBLIC_KEY_PATH;
-    if (path) {
-      const pem = readFileSync(path, "utf-8");
-      publicKey = await importSPKI(pem, "RS256");
-    }
+    publicKey = await importSPKI(
+      loadPem(env.PUBLIC_KEY, env.PUBLIC_KEY_PATH),
+      "RS256",
+    );
   }
   return publicKey;
 }

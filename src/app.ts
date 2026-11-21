@@ -6,17 +6,14 @@ import apiRouter from "./routes/ApiRouter";
 import cookieParser from "cookie-parser";
 import "./types/auth";
 import morgan from "morgan";
-import "dotenv/config";
+import { env } from "./config/env";
 import { apiLimiter, authLimiter } from "./config/rateLimiter";
 
 const app = express();
 
 app.use(helmet());
 app.use(cors({
-    origin: [
-    "https://cheapskate.in",
-    "https://www.cheapskate.in"
-  ],
+    origin: env.CORS_ORIGINS,
     credentials: true
 }));
 app.use(express.json({ limit: "10kb" }));

@@ -4,7 +4,7 @@ import prisma from "../db/prisma";
 import { randomBytes, createHash } from "node:crypto";
 import { getPrivateKey, getPublicKey } from "../config/keys";
 import type { JWTPayload } from "../types/auth";
-import "dotenv/config";
+import { env } from "../config/env";
 
 export const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
@@ -22,7 +22,7 @@ export async function signAccessToken(payload: JWTPayload): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "RS256" })
     .setIssuedAt()
-    .setExpirationTime(process.env.ACCESS_TOKEN_EXPIRY!)
+    .setExpirationTime(env.ACCESS_TOKEN_EXPIRY)
     .setIssuer("cheapskate")
     .setAudience("cheapskate-client")
     .sign(privateKey);

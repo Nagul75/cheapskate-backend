@@ -67,6 +67,9 @@ jobs:
               -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e NODE_ENV=prod \
+              -e DATABASE_SSL=true \
+              -e COOKIE_SECURE=true \
+              -e CORS_ORIGINS="https://cheapskate.in,https://www.cheapskate.in" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e ACCESS_TOKEN_EXPIRY=15m \
               -e REFRESH_TOKEN_EXPIRY=7d \

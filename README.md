@@ -58,3 +58,19 @@ A scalable REST API built with Node.js and PostgreSQL, designed with a focus on 
 
 - All endpoints are secured and scoped per user
 - Designed with scalability and extensibility in mind
+
+## Local development
+
+```bash
+docker compose up -d
+cp .env.example .env
+mkdir -p src/keys
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out src/keys/private.pem
+openssl rsa -pubout -in src/keys/private.pem -out src/keys/public.pem
+npm install
+npx prisma generate
+npx prisma migrate deploy
+npm run dev
+```
+
+All environment-specific values come from env vars, validated at startup in `src/config/env.ts`. See `.env.example`.

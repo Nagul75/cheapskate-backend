@@ -13,7 +13,7 @@ import {
   TokenError,
   SEVEN_DAYS,
 } from "../services/tokenService";
-import "dotenv/config";
+import { env } from "../config/env";
 
 import { Prisma } from "../generated/prisma/client";
 import prisma from "../db/prisma";
@@ -23,7 +23,7 @@ import { revokeAllUserRefreshTokens } from "../services/tokenService";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "prod",
+  secure: env.COOKIE_SECURE,
   sameSite: "strict" as const,
   maxAge: SEVEN_DAYS,
   path: "/auth/refresh",
